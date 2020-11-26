@@ -2,7 +2,9 @@
 *.pyo
 *.db
 .DS_Store
+
 .venv/
+.python-version
 
 # pycharm
 .idea/
