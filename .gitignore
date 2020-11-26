@@ -1,0 +1,11 @@
+*.pyc
+*.pyo
+*.db
+.DS_Store
+.venv/
+
+# pycharm
+.idea/
+
+# Project specific
+my_settings.json
