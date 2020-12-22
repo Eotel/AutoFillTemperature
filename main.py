@@ -64,28 +64,28 @@ if __name__ == '__main__':
 
     isComplete = False  # 入力完了かどうか
 
-    browser = webdriver.Chrome()
-    wait = WebDriverWait(browser, 10)  # ToDo 要素が見つかるまで待機を実装する
-    browser.implicitly_wait(10)  # 暗黙的に10秒間まで待つ
-
     for i, t in enumerate(temps):
+        browser = webdriver.Chrome()
+        wait = WebDriverWait(browser, 10)  # ToDo 要素が見つかるまで待機を実装する
+        browser.implicitly_wait(20)  # 暗黙的に20秒間まで待つ
+
         if isComplete is False:
             # メールアドレスを入力
             browser.get(url)
             browser.find_element(By.ID, 'i0116').send_keys(email)
-            sleep(1)
+
             browser.find_element(By.ID, 'idSIButton9').click()
 
             # パスワードを入力
             browser.find_element(By.ID, 'i0118').send_keys(pwd)
-            sleep(1)
+            sleep(1);
             browser.find_element(By.ID, 'idSIButton9').click()
-            sleep(1)
 
             # サインイン状態を維持するか
             browser.find_element(By.ID, 'idSIButton9').click()
 
             # 本日の日付を入力
+            sleep(1);
             browser.find_element(By.XPATH, "//input[@class='office-form-question-textbox form-control "
                                            "office-form-theme-focus-border border-no-radius "
                                            "datepicker']").click()
@@ -119,6 +119,7 @@ if __name__ == '__main__':
             # 体調を入力
             browser.find_element(By.XPATH, "//input[@value='良好']").click()
 
+
             # 部活動を入力
             if time == 'pm' or i == 1:
                 browser.find_element(By.CLASS_NAME, "select-placeholder").click()
@@ -126,6 +127,7 @@ if __name__ == '__main__':
 
             # フォームを送信してタブを閉じる
             browser.find_element(By.XPATH, "//button[@title='送信']").click()
+            sleep(1)
 
         else:
             break
