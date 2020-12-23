@@ -97,11 +97,12 @@ if __name__ == '__main__':
                                      "office-form-theme-focus-border border-no-radius datepicker']").send_keys(date)
                 browser.find_element(By.XPATH, "//button[@class='picker__button--close']").click()
 
+
             # 登校前か帰宅後か指定して次へ
             if time == 'pm' or i == 1:
                 browser.find_element(By.XPATH, "//input[@value='帰宅（帰寮）後']").click()
             elif time == 'am' or i == 0:
-                browser.find_element(By.XPATH, "//input[@value='登校前']").click()
+                browser.find_element(By.XPATH, "//input[@value='登校前・休日朝']").click()
 
             browser.find_element(By.XPATH, "//button[@title='次へ']").click()
 
