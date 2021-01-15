@@ -1,9 +1,12 @@
+import datetime
 import json
 import os
 from time import sleep
 
 import numpy as np
+import csv
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from argparse import ArgumentParser
@@ -35,6 +38,49 @@ def calc_temp(l_f):
     return t_f
 
 
+# ファイルがなければ作成し，csvファイルに体温と日付のログを残す
+def save_log_to_csv(row):
+    log_filename = "log.csv"
+    log_path = os.path.join(os.getcwd(), log_filename)
+
+    if not os.path.isfile(log_path):
+        with open(log_path, mode='x') as f:
+            label = ["Date", "Time", "Temperature", "WriteTime"]
+            writer = csv.writer(f)
+            writer.writerow(label)
+
+    with open(log_path, mode='a') as f:
+        writer = csv.writer(f)
+        writer.writerow(row)
+
+
+def Chrome():
+    options = Options()
+    # options.binary_location = '/Applications/Google Chrome.app'
+    options.add_argument('--incognito')
+    # browser = webdriver.Chrome(options=options)
+    browser = webdriver.Chrome()
+    # wait = WebDriverWait(browser, 10)  # ToDo 要素が見つかるまで待機を実装する
+    browser.implicitly_wait(20)  # 暗黙的に20秒間まで待つ
+
+    return browser
+
+
+def sign_in(bsr):
+    # メールアドレスを入力
+    bsr.find_element(By.ID, 'i0116').send_keys(email)
+    bsr.find_element(By.ID, 'idSIButton9').click()
+
+    # パスワードを入力
+    bsr.find_element(By.ID, 'i0118').send_keys(pwd)
+    sleep(1)
+    bsr.find_element(By.ID, 'idSIButton9').click()
+
+    # サインイン状態を維持するか
+    # browser.find_element(By.ID, 'idSIButton9').click()
+    bsr.find_element(By.XPATH, "//input[@value='いいえ']").click()
+
+
 if __name__ == '__main__':
     # 設定ファイルを読み込み
     json_path = os.path.join(os.path.dirname(__file__), FILENAME)
@@ -62,48 +108,38 @@ if __name__ == '__main__':
     time = args.time
     date = args.date
 
-    isComplete = False  # 入力完了かどうか
+    isComplete = False  # 入力完了かどうか  # ログに書き込むデータ [date, time, temp, write_time]
 
     for i, t in enumerate(temps):
-        browser = webdriver.Chrome()
-        wait = WebDriverWait(browser, 10)  # ToDo 要素が見つかるまで待機を実装する
-        browser.implicitly_wait(20)  # 暗黙的に20秒間まで待つ
+        row_log = []
 
         if isComplete is False:
-            # メールアドレスを入力
+            browser = Chrome()
             browser.get(url)
-            browser.find_element(By.ID, 'i0116').send_keys(email)
-
-            browser.find_element(By.ID, 'idSIButton9').click()
-
-            # パスワードを入力
-            browser.find_element(By.ID, 'i0118').send_keys(pwd)
-            sleep(1);
-            browser.find_element(By.ID, 'idSIButton9').click()
-
-            # サインイン状態を維持するか
-            browser.find_element(By.ID, 'idSIButton9').click()
+            sign_in(browser)
 
             # 本日の日付を入力
-            sleep(1);
             browser.find_element(By.XPATH, "//input[@class='office-form-question-textbox form-control "
                                            "office-form-theme-focus-border border-no-radius "
                                            "datepicker']").click()
             if date == "Today":
                 browser.find_element(By.CLASS_NAME, "picker__button--today").click()
+                dt_now = datetime.datetime.now()
+                row_log.append(dt_now.strftime('%Y/%m/%d'))
             else:
                 browser.find_element(By.XPATH,
                                      "//input[@class='office-form-question-textbox form-control "
                                      "office-form-theme-focus-border border-no-radius datepicker']").send_keys(date)
                 browser.find_element(By.XPATH, "//button[@class='picker__button--close']").click()
-
+                row_log.append(date)
 
             # 登校前か帰宅後か指定して次へ
             if time == 'pm' or i == 1:
                 browser.find_element(By.XPATH, "//input[@value='帰宅（帰寮）後']").click()
+                row_log.append('pm')
             elif time == 'am' or i == 0:
                 browser.find_element(By.XPATH, "//input[@value='登校前・休日朝']").click()
-
+                row_log.append('am')
             browser.find_element(By.XPATH, "//button[@title='次へ']").click()
 
             # 体温を入力
@@ -116,10 +152,10 @@ if __name__ == '__main__':
             browser.find_element(By.XPATH,
                                  "//input[@class='office-form-question-textbox office-form-textfield-input form-control "
                                  "office-form-theme-focus-border border-no-radius']").send_keys(str(t))
+            row_log.append(t)
 
             # 体調を入力
             browser.find_element(By.XPATH, "//input[@value='良好']").click()
-
 
             # 部活動を入力
             if time == 'pm' or i == 1:
@@ -130,8 +166,11 @@ if __name__ == '__main__':
             browser.find_element(By.XPATH, "//button[@title='送信']").click()
             sleep(1)
 
+            row_log.append(datetime.datetime.now())
+            save_log_to_csv(row_log)
+            sleep(1)
         else:
             break
 
-    browser.close()
-    browser.quit()
+        browser.close()
+        browser.quit()
