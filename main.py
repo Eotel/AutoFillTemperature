@@ -56,10 +56,9 @@ def save_log_to_csv(row):
 
 def Chrome():
     options = Options()
-    # options.binary_location = '/Applications/Google Chrome.app'
     options.add_argument('--incognito')
-    # browser = webdriver.Chrome(options=options)
-    browser = webdriver.Chrome()
+    # options.add_argument('--headless')
+    browser = webdriver.Chrome(options=options)
     # wait = WebDriverWait(browser, 10)  # ToDo 要素が見つかるまで待機を実装する
     browser.implicitly_wait(20)  # 暗黙的に20秒間まで待つ
 
@@ -169,8 +168,8 @@ if __name__ == '__main__':
             row_log.append(datetime.datetime.now())
             save_log_to_csv(row_log)
             sleep(1)
+
+            browser.quit()
         else:
             break
 
-        browser.close()
-        browser.quit()
