@@ -10,11 +10,20 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from argparse import ArgumentParser
+from logging import getLogger, StreamHandler, DEBUG
+
+logger = getLogger(__name__)
+handler = StreamHandler()
+handler.setLevel(DEBUG)
+logger.setLevel(DEBUG)
+logger.addHandler(handler)
+logger.propagate = False
 
 FILENAME = "settings.json"
 
-
 # オプションを受け取る
+
+
 def get_option():
     parser = ArgumentParser()
     parser.add_argument('-d', '--date', type=str,
@@ -122,22 +131,26 @@ if __name__ == '__main__':
                                            "office-form-theme-focus-border border-no-radius "
                                            "datepicker']").click()
             if date == "Today":
-                browser.find_element(By.CLASS_NAME, "picker__button--today").click()
+                browser.find_element(
+                    By.CLASS_NAME, "picker__button--today").click()
                 dt_now = datetime.datetime.now()
                 row_log.append(dt_now.strftime('%Y/%m/%d'))
             else:
                 browser.find_element(By.XPATH,
                                      "//input[@class='office-form-question-textbox form-control "
                                      "office-form-theme-focus-border border-no-radius datepicker']").send_keys(date)
-                browser.find_element(By.XPATH, "//button[@class='picker__button--close']").click()
+                browser.find_element(
+                    By.XPATH, "//button[@class='picker__button--close']").click()
                 row_log.append(date)
 
             # 登校前か帰宅後か指定して次へ
             if time == 'pm' or i == 1:
-                browser.find_element(By.XPATH, "//input[@value='帰宅（帰寮）後']").click()
+                browser.find_element(
+                    By.XPATH, "//input[@value='帰宅（帰寮）後']").click()
                 row_log.append('pm')
             elif time == 'am' or i == 0:
-                browser.find_element(By.XPATH, "//input[@value='登校前・休日朝']").click()
+                browser.find_element(
+                    By.XPATH, "//input[@value='登校前・休日朝']").click()
                 row_log.append('am')
             browser.find_element(By.XPATH, "//button[@title='次へ']").click()
 
@@ -148,17 +161,24 @@ if __name__ == '__main__':
             elif time == 'pm':
                 t = temps[1]
                 isComplete = True
+
+            # 体調を入力
+            try:
+                browser.find_element(By.XPATH, "//input[@value='良好']").click()
+            except Exception as e:
+                logger.debug("Exception: {e}".format())
+                logger.debug("体調の選択画面でエラーが生じました")
+
             browser.find_element(By.XPATH,
                                  "//input[@class='office-form-question-textbox office-form-textfield-input form-control "
                                  "office-form-theme-focus-border border-no-radius']").send_keys(str(t))
             row_log.append(t)
-
-            # 体調を入力
-            browser.find_element(By.XPATH, "//input[@value='良好']").click()
+            sleep(1)
 
             # 部活動を入力
             if time == 'pm' or i == 1:
-                browser.find_element(By.CLASS_NAME, "select-placeholder").click()
+                browser.find_element(
+                    By.CLASS_NAME, "select-placeholder").click()
                 browser.find_element(By.XPATH, "//*[text()=\"参加なし\"]").click()
 
             # フォームを送信してタブを閉じる
@@ -172,4 +192,3 @@ if __name__ == '__main__':
             browser.quit()
         else:
             break
-
