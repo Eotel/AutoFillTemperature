@@ -66,11 +66,11 @@ def save_log_to_csv(row):
         writer.writerow(row)
 
 
-def Chrome():
+def Chrome(path="chromedriver"):
     options = Options()
     options.add_argument('--incognito')
     # options.add_argument('--headless')
-    browser = webdriver.Chrome(options=options)
+    browser = webdriver.Chrome(options=options, executable_path=path)
     # wait = WebDriverWait(browser, 10)  # ToDo 要素が見つかるまで待機を実装する
     browser.implicitly_wait(20)  # 暗黙的に20秒間まで待つ
 
