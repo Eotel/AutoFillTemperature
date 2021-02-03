@@ -21,9 +21,8 @@ logger.propagate = False
 
 FILENAME = "settings.json"
 
+
 # オプションを受け取る
-
-
 def get_option():
     parser = ArgumentParser()
     parser.add_argument('-d', '--date', type=str,
@@ -37,6 +36,7 @@ def get_option():
 
 # 正規分布で体温を計算し閾値（最小・最大）外の場合は平均値に変更する
 def calc_temp(l_f):
+    logger.info('体温を計算します')
     t_f = round(np.random.normal(
         loc=l_f,
         scale=dev
@@ -44,11 +44,14 @@ def calc_temp(l_f):
 
     if t_f < t_min or t_max < t_f:
         t_f = l_f
+
+    logger.info(f'体温：{t_f}')
     return t_f
 
 
 # ファイルがなければ作成し，csvファイルに体温と日付のログを残す
 def save_log_to_csv(row):
+    logger.info('csvファイルにログを追記します')
     log_filename = "log.csv"
     log_path = os.path.join(os.getcwd(), log_filename)
 
@@ -75,6 +78,7 @@ def Chrome():
 
 
 def sign_in(bsr):
+    logger.info('サインインします')
     # メールアドレスを入力
     bsr.find_element(By.ID, 'i0116').send_keys(email)
     bsr.find_element(By.ID, 'idSIButton9').click()
@@ -126,33 +130,52 @@ if __name__ == '__main__':
             browser.get(url)
             sign_in(browser)
 
-            # 本日の日付を入力
-            browser.find_element(By.XPATH, "//input[@class='office-form-question-textbox form-control "
-                                           "office-form-theme-focus-border border-no-radius "
-                                           "datepicker']").click()
+            # 日付の選択
+            logger.info('日付を入力します')
             if date == "Today":
+                logger.info('-> 今日')
                 browser.find_element(
-                    By.CLASS_NAME, "picker__button--today").click()
+                    By.XPATH, "//input[@value='今日']").click()
                 dt_now = datetime.datetime.now()
                 row_log.append(dt_now.strftime('%Y/%m/%d'))
             else:
+                logger.info(f'-> その他: {date}')
+                browser.find_element(
+                    By.XPATH, "//input[@value='その他']").click()
                 browser.find_element(By.XPATH,
                                      "//input[@class='office-form-question-textbox form-control "
                                      "office-form-theme-focus-border border-no-radius datepicker']").send_keys(date)
-                browser.find_element(
-                    By.XPATH, "//button[@class='picker__button--close']").click()
+                # browser.find_element(
+                #     By.XPATH, "//button[@class='picker__button--close']").click()
                 row_log.append(date)
 
             # 登校前か帰宅後か指定して次へ
-            if time == 'pm' or i == 1:
-                browser.find_element(
-                    By.XPATH, "//input[@value='帰宅（帰寮）後']").click()
-                row_log.append('pm')
-            elif time == 'am' or i == 0:
-                browser.find_element(
-                    By.XPATH, "//input[@value='登校前・休日朝']").click()
-                row_log.append('am')
+            logger.info('時間帯を選択します')
+            try:
+                if time == 'pm' or i == 1:
+                    logger.info('-> 帰宅（帰寮）後')
+                    browser.find_element(
+                        By.XPATH, "//input[@value='帰宅（帰寮）後']").click()
+                    row_log.append('pm')
+                elif time == 'am' or i == 0:
+                    logger.info('-> 登校前・休日朝')
+                    browser.find_element(
+                        By.XPATH, "//input[@value='登校前・休日朝']").click()
+                    row_log.append('am')
+            except Exception as e:
+                logger.debug("Exception: {e}".format())
+                logger.debug("時間帯の選択画面でエラーが生じました")
+
             browser.find_element(By.XPATH, "//button[@title='次へ']").click()
+
+            # 体調を入力
+            logger.info('体調を入力します')
+            try:
+                logger.info('-> 良好')
+                browser.find_element(By.XPATH, "//input[@value='良好']").click()
+            except Exception as e:
+                logger.debug("Exception: {e}".format())
+                logger.debug("体調の選択画面でエラーが生じました")
 
             # 体温を入力
             if time == 'am':
@@ -162,13 +185,8 @@ if __name__ == '__main__':
                 t = temps[1]
                 isComplete = True
 
-            # 体調を入力
-            try:
-                browser.find_element(By.XPATH, "//input[@value='良好']").click()
-            except Exception as e:
-                logger.debug("Exception: {e}".format())
-                logger.debug("体調の選択画面でエラーが生じました")
-
+            logger.info('体温を入力します')
+            logger.info(f'-> {t}')
             browser.find_element(By.XPATH,
                                  "//input[@class='office-form-question-textbox office-form-textfield-input form-control "
                                  "office-form-theme-focus-border border-no-radius']").send_keys(str(t))
@@ -177,11 +195,14 @@ if __name__ == '__main__':
 
             # 部活動を入力
             if time == 'pm' or i == 1:
+                logger.info('部活動を入力します')
+                logger.info('-> 参加なし')
                 browser.find_element(
                     By.CLASS_NAME, "select-placeholder").click()
                 browser.find_element(By.XPATH, "//*[text()=\"参加なし\"]").click()
 
             # フォームを送信してタブを閉じる
+            logger.info('フォームを送信します')
             browser.find_element(By.XPATH, "//button[@title='送信']").click()
             sleep(1)
 
@@ -189,6 +210,7 @@ if __name__ == '__main__':
             save_log_to_csv(row_log)
             sleep(1)
 
+            logger.info('ブラウザを閉じます')
             browser.quit()
         else:
             break
